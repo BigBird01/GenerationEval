@@ -51,7 +51,7 @@ import re
 from bert_score import score
 from metrics.chrF import computeChrF
 from metrics.bleurt.bleurt import score as bleurt_score
-sys.argv = sys.argv[:1]
+#sys.argv = sys.argv[:1]
 from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
 from razdel import tokenize
 from tabulate import tabulate
@@ -97,7 +97,7 @@ def parse(refs_path, hyps_path, num_refs, lng='en'):
 
     logging.info('FINISHING TO PARSE INPUTS...')
     print('FINISHING TO PARSE INPUTS...')
-    return references, references_tok, hypothesis, hypothesis_tok
+    return references[:len(hypothesis)], references_tok[:len(hypothesis)], hypothesis, hypothesis_tok
 
 def bleu_score(refs_path, hyps_path, num_refs):
     logging.info('STARTING TO COMPUTE BLEU...')
@@ -144,7 +144,7 @@ def meteor_score(references, hypothesis, num_refs, lng='en'):
         f.write('\n'.join(hypothesis))
 
     linear_references = []
-    for refs in references:
+    for refs in references[:len(hypothesis)]:
         for i in range(num_refs):
             linear_references.append(refs[i])
 
@@ -262,7 +262,7 @@ def bleurt(references, hypothesis, num_refs, checkpoint = "metrics/bleurt/bleurt
             refs.append(ref)
 
     scorer = bleurt_score.BleurtScorer(checkpoint)
-    scores = scorer.score(refs, cands)
+    scores = scorer.score(references=refs, candidates=cands)
     scores = [max(scores[i:i+num_refs]) for i in range(0, len(scores), num_refs)]
     return round(sum(scores) / len(scores), 2)
 
@@ -301,7 +301,6 @@ def run(refs_path, hyps_path, num_refs, lng='en', metrics='bleu,meteor,chrf++,te
     
     return result
 
-
 if __name__ == '__main__':
     FORMAT = '%(levelname)s: %(asctime)-15s - %(message)s'
     logging.basicConfig(filename='eval.log', level=logging.INFO, format=FORMAT)
@@ -315,7 +314,7 @@ if __name__ == '__main__':
     argParser.add_argument("-nc", "--ncorder", help="chrF metric: character n-gram order (default=6)", type=int, default=6)
     argParser.add_argument("-nw", "--nworder", help="chrF metric: word n-gram order (default=2)", type=int, default=2)
     argParser.add_argument("-b", "--beta", help="chrF metric: beta parameter (default=2)", type=float, default=2.0)
-
+    
     args = argParser.parse_args()
 
     logging.info('READING INPUTS...')
